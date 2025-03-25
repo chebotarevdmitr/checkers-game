@@ -1,0 +1,28 @@
+# Файл .gitignore для C++ проекта с CMake и SFML
+
+# Сборки CMake
+build/
+out/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# Исполняемые файлы
+*.exe
+*.out
+*.app
+
+# Файлы редактора
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Системные файлы
+.DS_Store
+
+# vcpkg
+vcpkg/downloads/
+vcpkg/packages/
+vcpkg/buildtrees/
