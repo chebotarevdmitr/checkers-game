@@ -2,7 +2,7 @@
 #include <iostream> // Для вывода отладочных сообщений
 
 // Конструктор класса GameBoard
-GameBoard::GameBoard() {
+GameBoard::GameBoard() : highlightedPiece{-1, -1} {
     lightColor = sf::Color(240, 217, 181); // Светлый цвет клеток
     darkColor = sf::Color(181, 136, 99);   // Темный цвет клеток
 
@@ -22,21 +22,24 @@ GameBoard::GameBoard() {
             }
         }
     }
-
-    // Отладочный вывод начального состояния игрового поля
-    std::cout << "Initial board state:\n";
-    for (int row = 0; row < 8; ++row) {
-        for (int col = 0; col < 8; ++col) {
-            std::cout << boardState[row][col] << " ";
-        }
-        std::cout << std::endl;
-    }
 }
 
 // Метод для отрисовки игрового поля
 void GameBoard::draw(sf::RenderWindow& window) {
-    drawCells(window); // Отрисовываем клетки
-    drawPieces(window); // Отрисовываем шашки
+    drawCells(window);
+    drawPieces(window);
+
+    // Выделение выбранной шашки
+    if (highlightedPiece.x != -1 && highlightedPiece.y != -1) {
+        sf::RectangleShape highlight(sf::Vector2f(cellSize, cellSize));
+        highlight.setFillColor(sf::Color::Transparent);
+        highlight.setOutlineThickness(4);
+        highlight.setOutlineColor(sf::Color::Yellow);
+        highlight.setPosition(highlightedPiece.y * cellSize, highlightedPiece.x * cellSize);
+        window.draw(highlight);
+
+        std::cout << "Drawing highlight at (" << highlightedPiece.x << ", " << highlightedPiece.y << ")\n";
+    }
 }
 
 // Метод для отрисовки клеток игрового поля
@@ -106,4 +109,9 @@ bool GameBoard::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
 // Метод для получения размера клетки
 int GameBoard::getCellSize() const {
     return cellSize; // Возвращаем размер одной клетки
+}
+
+// Метод для установки координат выделенной шашки
+void GameBoard::setHighlightedPiece(int row, int col) {
+    highlightedPiece = {row, col}; // Устанавливаем координаты выделенной шашки
 }

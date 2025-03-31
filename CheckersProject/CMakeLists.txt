@@ -2,17 +2,17 @@
 cmake_minimum_required(VERSION 3.10)
 
 # Название проекта
-project(CheckersGame)
+project(CheckersGame LANGUAGES CXX)
 
 # Установка стандарта C++ (C++17)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-# Поиск и подключение библиотеки SFML
-find_package(SFML 2.6 COMPONENTS graphics window system REQUIRED)
+# Если вы используете vcpkg, добавьте путь к инструментам vcpkg
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 
-# Если вы используете Boost, добавьте поиск и подключение Boost
-# find_package(Boost 1.87 REQUIRED COMPONENTS system filesystem)
+# Поиск и подключение библиотеки SFML версии 2.6
+find_package(SFML 2.6 COMPONENTS graphics window system REQUIRED)
 
 # Добавление исполняемого файла
 add_executable(CheckersProject src/main.cpp src/GameBoard.cpp)
@@ -22,6 +22,3 @@ target_include_directories(CheckersProject PRIVATE include)
 
 # Связывание библиотек SFML
 target_link_libraries(CheckersProject sfml-graphics sfml-window sfml-system)
-
-# Если вы используете Boost, добавьте связывание компонентов Boost
-# target_link_libraries(CheckersProject Boost::system Boost::filesystem)

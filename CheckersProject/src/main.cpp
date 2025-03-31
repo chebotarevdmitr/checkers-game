@@ -56,6 +56,7 @@ int main() {
                     isPieceSelected = true; // Устанавливаем флаг выбора
                     selectedRow = row; // Сохраняем координаты выбранной шашки
                     selectedCol = col;
+                    gameBoard.setHighlightedPiece(row, col); // Устанавливаем выделение
                     std::cout << "Piece selected at (" << row << ", " << col << ")\n";
                 }
                 // Если шашка уже выбрана, пытаемся переместить её
@@ -66,6 +67,7 @@ int main() {
                     // Пытаемся переместить шашку
                     if (gameBoard.movePiece(selectedRow, selectedCol, row, col)) {
                         isPieceSelected = false; // Снимаем выбор
+                        gameBoard.setHighlightedPiece(-1, -1); // Снимаем выделение
                         std::cout << "Piece moved successfully.\n";
                     } else {
                         std::cout << "Invalid move.\n";
