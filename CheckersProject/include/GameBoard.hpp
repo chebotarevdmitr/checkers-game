@@ -12,6 +12,15 @@ public:
     // Метод для отрисовки игрового поля
     void draw(sf::RenderWindow& window);
 
+    // Проверка, есть ли шашка на клетке
+    bool isPieceAt(int row, int col);
+
+    // Перемещение шашки
+    bool movePiece(int fromRow, int fromCol, int toRow, int toCol);
+
+    // Получение размера клетки
+    int getCellSize() const;
+
 private:
     // Размер одной клетки
     const int cellSize = 100;
@@ -19,6 +28,9 @@ private:
     // Цвета клеток
     sf::Color lightColor;
     sf::Color darkColor;
+
+    // Двумерный массив для хранения состояния поля
+    int boardState[8][8];
 
     // Метод для отрисовки клеток
     void drawCells(sf::RenderWindow& window);
