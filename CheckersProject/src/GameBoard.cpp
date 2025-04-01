@@ -11,14 +11,14 @@ GameBoard::GameBoard() : highlightedPiece{-1, -1} {
         for (int col = 0; col < 8; ++col) {
             if ((row + col) % 2 != 0) { // Только на тёмных клетках
                 if (row < 3) { // Белые шашки
-                    boardState[row][col] = 1;
+                    boardState[row][col] = WHITE_PIECE;
                 } else if (row > 4) { // Чёрные шашки
-                    boardState[row][col] = 2;
+                    boardState[row][col] = BLACK_PIECE;
                 } else {
-                    boardState[row][col] = 0; // Пустая клетка
+                    boardState[row][col] = EMPTY; // Пустая клетка
                 }
             } else {
-                boardState[row][col] = 0; // Пустая клетка
+                boardState[row][col] = EMPTY; // Пустая клетка
             }
         }
     }
@@ -63,19 +63,20 @@ void GameBoard::drawCells(sf::RenderWindow& window) {
 void GameBoard::drawPieces(sf::RenderWindow& window) {
     sf::Color whitePieceColor(255, 255, 255); // Цвет белых шашек
     sf::Color blackPieceColor(0, 0, 0);      // Цвет чёрных шашек
+    sf::Color kingColor(255, 215, 0);        // Цвет дамок (золотой)
 
     for (int row = 0; row < 8; ++row) {
         for (int col = 0; col < 8; ++col) {
-            if (boardState[row][col] == 1) { // Если на клетке белая шашка
-                sf::CircleShape piece(45); // Создаем круг радиусом 45
-                piece.setFillColor(whitePieceColor); // Задаем цвет
-                piece.setPosition(col * cellSize + 5, row * cellSize + 5); // Устанавливаем позицию
-                window.draw(piece); // Отрисовываем шашку
-            } else if (boardState[row][col] == 2) { // Если на клетке чёрная шашка
-                sf::CircleShape piece(45); // Создаем круг радиусом 45
-                piece.setFillColor(blackPieceColor); // Задаем цвет
-                piece.setPosition(col * cellSize + 5, row * cellSize + 5); // Устанавливаем позицию
-                window.draw(piece); // Отрисовываем шашку
+            if (boardState[row][col] == WHITE_PIECE || boardState[row][col] == BLACK_PIECE) {
+                sf::CircleShape piece(45);
+                piece.setFillColor(boardState[row][col] == WHITE_PIECE ? whitePieceColor : blackPieceColor);
+                piece.setPosition(col * cellSize + 5, row * cellSize + 5);
+                window.draw(piece);
+            } else if (boardState[row][col] == WHITE_KING || boardState[row][col] == BLACK_KING) {
+                sf::CircleShape piece(45);
+                piece.setFillColor(kingColor);
+                piece.setPosition(col * cellSize + 5, row * cellSize + 5);
+                window.draw(piece);
             }
         }
     }
@@ -83,36 +84,47 @@ void GameBoard::drawPieces(sf::RenderWindow& window) {
 
 // Метод для проверки наличия шашки на клетке
 bool GameBoard::isPieceAt(int row, int col) {
-    return boardState[row][col] != 0; // Возвращаем true, если на клетке есть шашка
+    return boardState[row][col] != EMPTY; // Возвращаем true, если на клетке есть шашка
 }
 
 // Метод для перемещения шашки
 bool GameBoard::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
-    // Проверяем, что ход допустим (например, только по диагонали)
-    if (abs(fromRow - toRow) == 1 && abs(fromCol - toCol) == 1) {
-        // Обычный ход
-        boardState[toRow][toCol] = boardState[fromRow][fromCol]; // Перемещаем шашку
-        boardState[fromRow][fromCol] = 0; // Очищаем начальную клетку
-        return true; // Ход успешен
-    } else if (abs(fromRow - toRow) == 2 && abs(fromCol - toCol) == 2) {
-        // "Съедание" шашки противника
-        int midRow = (fromRow + toRow) / 2;
-        int midCol = (fromCol + toCol) / 2;
+    int piece = boardState[fromRow][fromCol];
 
-        if (boardState[midRow][midCol] != 0 && 
-            boardState[midRow][midCol] != boardState[fromRow][fromCol]) {
-            // Удаляем шашку противника
-            boardState[midRow][midCol] = 0;
+    // Проверяем, является ли шашка дамкой
+    bool isKing = (piece == WHITE_KING || piece == BLACK_KING);
 
-            // Перемещаем шашку
-            boardState[toRow][toCol] = boardState[fromRow][fromCol];
-            boardState[fromRow][fromCol] = 0;
+    // Вычисляем направление движения
+    int rowDir = (toRow - fromRow > 0) ? 1 : -1;
+    int colDir = (toCol - fromCol > 0) ? 1 : -1;
 
-            return true; // Ход успешен
+    // Для дамок разрешено движение на любое количество клеток
+    if (isKing) {
+        int steps = std::max(abs(toRow - fromRow), abs(toCol - fromCol));
+        for (int step = 1; step < steps; ++step) {
+            int midRow = fromRow + step * rowDir;
+            int midCol = fromCol + step * colDir;
+
+            // Если на пути есть шашка, ход недопустим
+            if (boardState[midRow][midCol] != EMPTY) {
+                return false;
+            }
+        }
+    } else {
+        // Для обычных шашек разрешены только ходы на одну клетку
+        if (abs(fromRow - toRow) != 1 || abs(fromCol - toCol) != 1) {
+            return false;
         }
     }
 
-    return false; // Ход недопустим
+    // Перемещаем шашку
+    boardState[toRow][toCol] = piece;
+    boardState[fromRow][fromCol] = EMPTY;
+
+    // Проверяем, нужно ли превратить шашку в дамку
+    promoteToKing(toRow, toCol);
+
+    return true;
 }
 
 // Метод для получения размера клетки
@@ -143,8 +155,8 @@ bool GameBoard::hasMandatoryCapture(int player) {
                     int midRow = row + dir[0] / 2;
                     int midCol = col + dir[1] / 2;
 
-                    if (isValidPosition(toRow, toCol) && boardState[toRow][toCol] == 0 &&
-                        boardState[midRow][midCol] != 0 && boardState[midRow][midCol] != player) {
+                    if (isValidPosition(toRow, toCol) && boardState[toRow][toCol] == EMPTY &&
+                        boardState[midRow][midCol] != EMPTY && boardState[midRow][midCol] != player) {
                         return true; // Обязательный ход найден
                     }
                 }
@@ -165,8 +177,8 @@ bool GameBoard::canCaptureFrom(int row, int col) {
         int midRow = row + dir[0] / 2;
         int midCol = col + dir[1] / 2;
 
-        if (isValidPosition(toRow, toCol) && boardState[toRow][toCol] == 0 &&
-            boardState[midRow][midCol] != 0 && boardState[midRow][midCol] != player) {
+        if (isValidPosition(toRow, toCol) && boardState[toRow][toCol] == EMPTY &&
+            boardState[midRow][midCol] != EMPTY && boardState[midRow][midCol] != player) {
             return true; // Возможен "съедание" из этой позиции
         }
     }
@@ -176,4 +188,14 @@ bool GameBoard::canCaptureFrom(int row, int col) {
 // Вспомогательный метод для проверки корректности координат
 bool GameBoard::isValidPosition(int row, int col) {
     return row >= 0 && row < 8 && col >= 0 && col < 8; // Координаты должны быть в пределах поля
+}
+
+// Метод для превращения шашки в дамку
+void GameBoard::promoteToKing(int row, int col) {
+    int piece = boardState[row][col];
+    if (piece == WHITE_PIECE && row == 7) {
+        boardState[row][col] = WHITE_KING; // Белая шашка становится дамкой
+    } else if (piece == BLACK_PIECE && row == 0) {
+        boardState[row][col] = BLACK_KING; // Чёрная шашка становится дамкой
+    }
 }

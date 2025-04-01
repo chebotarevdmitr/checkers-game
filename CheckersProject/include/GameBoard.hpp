@@ -34,6 +34,18 @@ public:
     // Метод для проверки возможности "съедания" из заданной позиции
     bool canCaptureFrom(int row, int col);
 
+    // Перечисление для типов шашек
+    enum PieceType {
+        EMPTY = 0,      // Пустая клетка
+        WHITE_PIECE = 1, // Белая шашка
+        BLACK_PIECE = 2, // Чёрная шашка
+        WHITE_KING = 3,  // Белая дамка
+        BLACK_KING = 4   // Чёрная дамка
+    };
+
+    // Метод для превращения шашки в дамку
+    void promoteToKing(int row, int col);
+
 private:
     // Метод для отрисовки клеток игрового поля
     void drawCells(sf::RenderWindow& window);
