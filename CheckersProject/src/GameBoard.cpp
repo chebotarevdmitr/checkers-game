@@ -26,19 +26,17 @@ GameBoard::GameBoard() : highlightedPiece{-1, -1} {
 
 // Метод для отрисовки игрового поля
 void GameBoard::draw(sf::RenderWindow& window) {
-    drawCells(window);
-    drawPieces(window);
+    drawCells(window); // Отрисовываем клетки
+    drawPieces(window); // Отрисовываем шашки
 
     // Выделение выбранной шашки
     if (highlightedPiece.x != -1 && highlightedPiece.y != -1) {
         sf::RectangleShape highlight(sf::Vector2f(cellSize, cellSize));
-        highlight.setFillColor(sf::Color::Transparent);
-        highlight.setOutlineThickness(4);
-        highlight.setOutlineColor(sf::Color::Yellow);
-        highlight.setPosition(highlightedPiece.y * cellSize, highlightedPiece.x * cellSize);
-        window.draw(highlight);
-
-        std::cout << "Drawing highlight at (" << highlightedPiece.x << ", " << highlightedPiece.y << ")\n";
+        highlight.setFillColor(sf::Color::Transparent); // Прозрачный фон
+        highlight.setOutlineThickness(4); // Толщина контура
+        highlight.setOutlineColor(sf::Color::Yellow); // Жёлтый цвет контура
+        highlight.setPosition(highlightedPiece.y * cellSize, highlightedPiece.x * cellSize); // Позиция выделения
+        window.draw(highlight); // Отрисовываем выделение
     }
 }
 
@@ -90,19 +88,30 @@ bool GameBoard::isPieceAt(int row, int col) {
 
 // Метод для перемещения шашки
 bool GameBoard::movePiece(int fromRow, int fromCol, int toRow, int toCol) {
-    // Выводим отладочные сообщения о попытке перемещения
-    std::cout << "Trying to move from (" << fromRow << ", " << fromCol
-              << ") to (" << toRow << ", " << toCol << ")\n";
-
     // Проверяем, что ход допустим (например, только по диагонали)
     if (abs(fromRow - toRow) == 1 && abs(fromCol - toCol) == 1) {
-        std::cout << "Move is valid.\n";
+        // Обычный ход
         boardState[toRow][toCol] = boardState[fromRow][fromCol]; // Перемещаем шашку
         boardState[fromRow][fromCol] = 0; // Очищаем начальную клетку
         return true; // Ход успешен
+    } else if (abs(fromRow - toRow) == 2 && abs(fromCol - toCol) == 2) {
+        // "Съедание" шашки противника
+        int midRow = (fromRow + toRow) / 2;
+        int midCol = (fromCol + toCol) / 2;
+
+        if (boardState[midRow][midCol] != 0 && 
+            boardState[midRow][midCol] != boardState[fromRow][fromCol]) {
+            // Удаляем шашку противника
+            boardState[midRow][midCol] = 0;
+
+            // Перемещаем шашку
+            boardState[toRow][toCol] = boardState[fromRow][fromCol];
+            boardState[fromRow][fromCol] = 0;
+
+            return true; // Ход успешен
+        }
     }
 
-    std::cout << "Move is invalid.\n";
     return false; // Ход недопустим
 }
 
@@ -111,7 +120,60 @@ int GameBoard::getCellSize() const {
     return cellSize; // Возвращаем размер одной клетки
 }
 
+// Метод для получения шашки на заданной клетке
+int GameBoard::getPieceAt(int row, int col) {
+    return boardState[row][col]; // Возвращаем значение из массива boardState
+}
+
 // Метод для установки координат выделенной шашки
 void GameBoard::setHighlightedPiece(int row, int col) {
     highlightedPiece = {row, col}; // Устанавливаем координаты выделенной шашки
+}
+
+// Метод для проверки наличия обязательных ходов
+bool GameBoard::hasMandatoryCapture(int player) {
+    for (int row = 0; row < 8; ++row) {
+        for (int col = 0; col < 8; ++col) {
+            if (boardState[row][col] == player) {
+                // Проверяем все возможные направления для "съедания"
+                int directions[4][2] = {{-2, -2}, {-2, 2}, {2, -2}, {2, 2}};
+                for (auto& dir : directions) {
+                    int toRow = row + dir[0];
+                    int toCol = col + dir[1];
+                    int midRow = row + dir[0] / 2;
+                    int midCol = col + dir[1] / 2;
+
+                    if (isValidPosition(toRow, toCol) && boardState[toRow][toCol] == 0 &&
+                        boardState[midRow][midCol] != 0 && boardState[midRow][midCol] != player) {
+                        return true; // Обязательный ход найден
+                    }
+                }
+            }
+        }
+    }
+    return false; // Обязательных ходов нет
+}
+
+// Метод для проверки возможности "съедания" из заданной позиции
+bool GameBoard::canCaptureFrom(int row, int col) {
+    int player = boardState[row][col];
+    int directions[4][2] = {{-2, -2}, {-2, 2}, {2, -2}, {2, 2}};
+
+    for (auto& dir : directions) {
+        int toRow = row + dir[0];
+        int toCol = col + dir[1];
+        int midRow = row + dir[0] / 2;
+        int midCol = col + dir[1] / 2;
+
+        if (isValidPosition(toRow, toCol) && boardState[toRow][toCol] == 0 &&
+            boardState[midRow][midCol] != 0 && boardState[midRow][midCol] != player) {
+            return true; // Возможен "съедание" из этой позиции
+        }
+    }
+    return false; // Невозможно "съедание" из этой позиции
+}
+
+// Вспомогательный метод для проверки корректности координат
+bool GameBoard::isValidPosition(int row, int col) {
+    return row >= 0 && row < 8 && col >= 0 && col < 8; // Координаты должны быть в пределах поля
 }

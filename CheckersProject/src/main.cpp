@@ -1,6 +1,6 @@
 #include <SFML/Graphics.hpp> // Подключаем библиотеку SFML для работы с графикой
-#include "../include/GameBoard.hpp" // Подключаем заголовочный файл игрового поля
-#include <iostream> // Подключаем библиотеку для вывода отладочных сообщений
+#include "../include/GameBoard.hpp" // Подключаем заголовочный файл класса GameBoard
+#include <iostream> // Для вывода отладочных сообщений
 
 int main() {
     // Создаем окно размером 800x800 пикселей с заголовком "Checkers Game"
@@ -18,8 +18,11 @@ int main() {
     // Координаты выбранной шашки
     int selectedRow = -1, selectedCol = -1;
 
+    // Текущий игрок (1 — белые, 2 — чёрные)
+    int currentPlayer = 1;
+
     // Выводим сообщение о начале игры
-    std::cout << "Game started. Click on the board to select and move pieces.\n";
+    std::cout << "Game started. Player 1 (White) moves first.\n";
 
     // Главный цикл программы
     while (window.isOpen()) {
@@ -38,27 +41,36 @@ int main() {
                 // Получаем позицию мыши в экранных координатах
                 mousePosition = sf::Mouse::getPosition(window);
 
-                // Выводим позицию мыши в терминал для отладки
-                std::cout << "Mouse clicked at screen position: (" << mousePosition.x << ", " << mousePosition.y << ")\n";
-
                 // Вычисляем координаты клетки на игровом поле
                 int row = mousePosition.y / gameBoard.getCellSize();
                 int col = mousePosition.x / gameBoard.getCellSize();
 
-                // Выводим координаты клетки в терминал для отладки
-                std::cout << "Converted to board position: (" << row << ", " << col << ")\n";
-
                 // Проверяем, есть ли шашка на клетке
-                std::cout << "isPieceAt(" << row << ", " << col << ") = " << gameBoard.isPieceAt(row, col) << "\n";
-
-                // Если шашка еще не выбрана, выбираем её
                 if (!isPieceSelected && gameBoard.isPieceAt(row, col)) {
-                    isPieceSelected = true; // Устанавливаем флаг выбора
-                    selectedRow = row; // Сохраняем координаты выбранной шашки
+                    // Проверяем, что шашка принадлежит текущему игроку
+                    if (gameBoard.getPieceAt(row, col) != currentPlayer) {
+                        std::cout << "It's not your piece! Current player: " << currentPlayer << "\n";
+                        continue;
+                    }
+
+                    // Проверяем, есть ли обязательные ходы
+                    if (gameBoard.hasMandatoryCapture(currentPlayer)) {
+                        std::cout << "You must capture an opponent's piece!\n";
+
+                        // Проверяем, можно ли "съесть" шашку из текущей позиции
+                        if (!gameBoard.canCaptureFrom(row, col)) {
+                            std::cout << "You must select a piece that can capture.\n";
+                            continue;
+                        }
+                    }
+
+                    // Выбираем шашку
+                    isPieceSelected = true;
+                    selectedRow = row;
                     selectedCol = col;
                     gameBoard.setHighlightedPiece(row, col); // Устанавливаем выделение
                     std::cout << "Piece selected at (" << row << ", " << col << ")\n";
-                }
+                } 
                 // Если шашка уже выбрана, пытаемся переместить её
                 else if (isPieceSelected) {
                     std::cout << "Attempting to move piece from (" << selectedRow << ", " << selectedCol
@@ -68,9 +80,12 @@ int main() {
                     if (gameBoard.movePiece(selectedRow, selectedCol, row, col)) {
                         isPieceSelected = false; // Снимаем выбор
                         gameBoard.setHighlightedPiece(-1, -1); // Снимаем выделение
-                        std::cout << "Piece moved successfully.\n";
+
+                        // Переключаем игрока
+                        currentPlayer = (currentPlayer == 1) ? 2 : 1;
+                        std::cout << "Player " << currentPlayer << "'s turn.\n";
                     } else {
-                        std::cout << "Invalid move.\n";
+                        std::cout << "Invalid move. Try again.\n";
                     }
                 }
             }

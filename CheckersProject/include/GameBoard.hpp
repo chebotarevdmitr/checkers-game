@@ -22,8 +22,17 @@ public:
     // Метод для получения размера клетки
     int getCellSize() const;
 
+    // Метод для получения шашки на заданной клетке
+    int getPieceAt(int row, int col);
+
     // Метод для установки координат выделенной шашки
     void setHighlightedPiece(int row, int col);
+
+    // Метод для проверки наличия обязательных ходов
+    bool hasMandatoryCapture(int player);
+
+    // Метод для проверки возможности "съедания" из заданной позиции
+    bool canCaptureFrom(int row, int col);
 
 private:
     // Метод для отрисовки клеток игрового поля
@@ -44,6 +53,9 @@ private:
 
     // Переменная для хранения координат выделенной шашки
     sf::Vector2i highlightedPiece; // {-1, -1} означает, что шашка не выделена
+
+    // Вспомогательный метод для проверки корректности координат
+    bool isValidPosition(int row, int col);
 };
 
 #endif // GAMEBOARD_HPP
