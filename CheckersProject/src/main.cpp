@@ -1,6 +1,6 @@
-#include <SFML/Graphics.hpp> // Подключаем библиотеку SFML для работы с графикой
 #include "../include/GameBoard.hpp" // Подключаем заголовочный файл класса GameBoard
-#include <iostream> // Для вывода отладочных сообщений
+#include <SFML/Graphics.hpp>        // Подключаем библиотеку SFML для работы с графикой
+#include <iostream>                 // Для вывода отладочных сообщений
 
 int main() {
     // Создаем окно размером 800x800 пикселей с заголовком "Checkers Game"
@@ -45,7 +45,7 @@ int main() {
                 int row = mousePosition.y / gameBoard.getCellSize();
                 int col = mousePosition.x / gameBoard.getCellSize();
 
-                // Проверяем, есть ли шашка на клетке
+                // Если шашка ещё не выбрана, пытаемся выбрать её
                 if (!isPieceSelected && gameBoard.isPieceAt(row, col)) {
                     // Проверяем, что шашка принадлежит текущему игроку
                     if (gameBoard.getPieceAt(row, col) != currentPlayer) {
