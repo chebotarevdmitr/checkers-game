@@ -1,17 +1,17 @@
-#include "../include/GameBoard.hpp"
 #include <SFML/Graphics.hpp>
-#include <iostream>
+#include "../include/GameBoard.hpp"
 
 int main() {
+    // Создаем окно
     sf::RenderWindow window(sf::VideoMode(800, 800), "Checkers Game");
+    window.setFramerateLimit(60);
+
+    // Создаем объект игрового поля
     GameBoard gameBoard;
 
-    sf::Vector2i mousePosition;
-    bool isPieceSelected = false;
-    int selectedRow = -1, selectedCol = -1;
-    int currentPlayer = 1;
-
-    std::cout << "Game started. Player 1 (White) moves first.\n";
+    // Переменные для хранения координат выделенной шашки
+    int selectedRow = -1;
+    int selectedCol = -1;
 
     while (window.isOpen()) {
         sf::Event event;
@@ -20,47 +20,31 @@ int main() {
                 window.close();
             }
 
+            // Обработка кликов мыши
             if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-                mousePosition = sf::Mouse::getPosition(window);
-                int row = mousePosition.y / gameBoard.getCellSize();
-                int col = mousePosition.x / gameBoard.getCellSize();
+                int mouseX = event.mouseButton.x;
+                int mouseY = event.mouseButton.y;
 
-                if (!isPieceSelected && gameBoard.isPieceAt(row, col)) {
-                    if (gameBoard.getPieceAt(row, col) != currentPlayer) {
-                        std::cout << "It's not your piece! Current player: " << currentPlayer << "\n";
-                        continue;
-                    }
+                int clickedRow = mouseY / gameBoard.getCellSize();
+                int clickedCol = mouseX / gameBoard.getCellSize();
 
-                    if (gameBoard.hasMandatoryCapture(currentPlayer)) {
-                        std::cout << "You must capture an opponent's piece!\n";
-                        if (!gameBoard.canCaptureFrom(row, col)) {
-                            std::cout << "You must select a piece that can capture.\n";
-                            continue;
+                if (gameBoard.isPieceAt(clickedRow, clickedCol)) {
+                    selectedRow = clickedRow;
+                    selectedCol = clickedCol;
+                    gameBoard.setHighlightedPiece(selectedRow, selectedCol);
+                } else {
+                    if (selectedRow != -1 && selectedCol != -1) {
+                        if (gameBoard.movePiece(selectedRow, selectedCol, clickedRow, clickedCol)) {
+                            selectedRow = -1;
+                            selectedCol = -1;
                         }
-                    }
-
-                    isPieceSelected = true;
-                    selectedRow = row;
-                    selectedCol = col;
-                    gameBoard.setHighlightedPiece(row, col);
-                    std::cout << "Piece selected at (" << row << ", " << col << ")\n";
-                } else if (isPieceSelected) {
-                    std::cout << "Attempting to move piece from (" << selectedRow << ", " << selectedCol
-                              << ") to (" << row << ", " << col << ")\n";
-
-                    if (gameBoard.movePiece(selectedRow, selectedCol, row, col)) {
-                        isPieceSelected = false;
-                        gameBoard.setHighlightedPiece(-1, -1);
-                        currentPlayer = (currentPlayer == 1) ? 2 : 1;
-                        std::cout << "Player " << currentPlayer << "'s turn.\n";
-                    } else {
-                        std::cout << "Invalid move. Try again.\n";
                     }
                 }
             }
         }
 
-        window.clear();
+        // Отрисовка
+        window.clear(sf::Color::White);
         gameBoard.draw(window);
         window.display();
     }
